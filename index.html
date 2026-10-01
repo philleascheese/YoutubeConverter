@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic YouTube Short Embed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f4f4f9;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        input[type="text"] {
+            width: 300px;
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #cc0000;
+        }
+        .video-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        iframe {
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>YouTube Short Embedder</h2>
+        <input type="text" id="urlInput" placeholder="Paste YouTube Short URL here...">
+        <button onclick="embedShort()">Embed Video</button>
+        
+        <div class="video-container">
+            <iframe id="ytPlayer" width="315" height="560" src="" title="YouTube Short" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="display: none;"></iframe>
+        </div>
+    </div>
+
+    <script>
+        function extractVideoId(url) {
+            // Handles standard /shorts/ID and regular watch?v=ID formats
+            let match = url.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
+            if (match) return match[1];
+            
+            match = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+            if (match) return match[1];
+            
+            return null;
+        }
+
+        function embedShort() {
+            const url = document.getElementById('urlInput').value.trim();
+            const videoId = extractVideoId(url);
+            const iframe = document.getElementById('ytPlayer');
+
+            if (videoId) {
+                iframe.src = `https://youtube.com{videoId}`;
+                iframe.style.display = 'block';
+            } else {
+                alert('Please enter a valid YouTube Short or Video URL.');
+            }
+        }
+    </script>
+
+</body>
+</html>
