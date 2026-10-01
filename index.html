@@ -3,119 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube & Shorts Embedder</title>
+    <title>YouTube Embedder</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 50px;
-            background-color: #f4f4f9;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
         }
-        .container {
-            width: 100%;
-            max-width: 600px;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            text-align: center;
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
         }
         input[type="text"] {
-            width: 80%;
-            padding: 10px;
+            width: 100%;
+            padding: 8px;
             font-size: 16px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            box-sizing: border-box;
         }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #ff0000;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #cc0000;
-        }
-        .player-wrapper {
-            margin-top: 20px;
+        .video-container {
+            margin-top: 15px;
+            background: #f0f0f0;
             display: flex;
             justify-content: center;
+            align-items: center;
+        }
+        /* Desktop aspect ratios */
+        .standard-video {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+        }
+        .shorts-video {
+            aspect-ratio: 9 / 16;
+            width: 315px; /* Standard Shorts width */
+            height: 560px;
         }
         iframe {
+            width: 100%;
+            height: 100%;
             border: none;
-            border-radius: 8px;
+            display: none; /* Hidden until a valid link is added */
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>YouTube URL Embedder</h2>
-    <p>Paste a standard YouTube or YouTube Shorts link below:</p>
-    <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=... or /shorts/...">
-    <br>
-    <button onclick="embedVideo()">Embed Video</button>
-    
-    <div class="player-wrapper" id="playerContainer">
-        <!-- The iframe will appear here -->
+    <h2>YouTube Video Embedder</h2>
+
+    <!-- Standard Video Input -->
+    <div class="input-group">
+        <label for="standardInput">Paste Standard YouTube URL:</label>
+        <input type="text" id="standardInput" placeholder="https://youtube.com">
+        <div class="video-container standard-video">
+            <iframe id="standardPlayer" allowfullscreen></iframe>
+        </div>
     </div>
-</div>
 
-<script>
-function extractVideoId(url) {
-    let videoId = null;
-    if (url.includes('/shorts/')) {
-        const parts = url.split('/shorts/');
-        videoId = parts[1] ? parts[1].split('?')[0] : null;
-        return { id: videoId, isShort: true };
-    } else if (url.includes('v=')) {
-        const urlParams = new URLSearchParams(new URL(url).search);
-        videoId = urlParams.get('v');
-        return { id: videoId, isShort: false };
-    } else if (url.includes('youtu.be/')) {
-        const parts = url.split('youtu.be/');
-        videoId = parts[1] ? parts[1].split('?')[0] : null;
-        return { id: videoId, isShort: false };
-    }
-    return { id: null, isShort: false };
-}
+    <!-- Shorts Video Input -->
+    <div class="input-group">
+        <label for="shortsInput">Paste YouTube Shorts URL:</label>
+        <input type="text" id="shortsInput" placeholder="https://youtube.com">
+        <div class="video-container shorts-video">
+            <iframe id="shortsPlayer" allowfullscreen></iframe>
+        </div>
+    </div>
 
-function embedVideo() {
-    const rawUrl = document.getElementById('urlInput').value.trim();
-    const container = document.getElementById('playerContainer');
-    container.innerHTML = '';
-
-    try {
-        const { id, isShort } = extractVideoId(rawUrl);
-
-        if (!id) {
-            container.innerHTML = '<p style="color:red;">Invalid YouTube URL. Please try again.</p>';
-            return;
+    <script>
+        // Function to extract YouTube ID from virtually any layout
+        function getYouTubeId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
         }
 
-        const width = isShort ? 315 : 560;
-        const height = isShort ? 560 : 315;
+        // Function to update the iframe source
+        function handleVideoEmbed(inputId, iframeId) {
+            const input = document.getElementById(inputId);
+            const iframe = document.getElementById(iframeId);
 
-        const iframe = document.createElement('iframe');
-        iframe.width = width;
-        iframe.height = height;
-        iframe.src = `https://youtube.com{id}`;
-        iframe.title = 'YouTube video player';
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-        iframe.allowFullscreen = true;
+            input.addEventListener('input', (e) => {
+                const url = e.target.value.trim();
+                const videoId = getYouTubeId(url);
 
-        container.appendChild(iframe);
-    } catch (e) {
-        container.innerHTML = '<p style="color:red;">Please enter a valid complete URL.</p>';
-    }
-}
-</script>
+                if (videoId) {
+                    iframe.src = `https://youtube.com{videoId}`;
+                    iframe.style.display = 'block';
+                } else {
+                    iframe.src = '';
+                    iframe.style.display = 'none';
+                }
+            });
+        }
+
+        // Initialize listeners for both inputs
+        handleVideoEmbed('standardInput', 'standardPlayer');
+        handleVideoEmbed('shortsInput', 'shortsPlayer');
+    </script>
 
 </body>
 </html>
