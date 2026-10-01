@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic YouTube Short Embed</title>
+    <title>YouTube & Shorts Embedder</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            margin-top: 50px;
             background-color: #f4f4f9;
-            margin: 0;
         }
         .container {
+            width: 100%;
+            max-width: 600px;
             background: white;
             padding: 20px;
             border-radius: 8px;
@@ -23,14 +23,16 @@
             text-align: center;
         }
         input[type="text"] {
-            width: 300px;
+            width: 80%;
             padding: 10px;
-            margin-right: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
         }
         button {
-            padding: 10px 15px;
+            padding: 10px 20px;
+            font-size: 16px;
             background-color: #ff0000;
             color: white;
             border: none;
@@ -40,53 +42,80 @@
         button:hover {
             background-color: #cc0000;
         }
-        .video-container {
+        .player-wrapper {
             margin-top: 20px;
             display: flex;
             justify-content: center;
         }
         iframe {
+            border: none;
             border-radius: 8px;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>YouTube Short Embedder</h2>
-        <input type="text" id="urlInput" placeholder="Paste YouTube Short URL here...">
-        <button onclick="embedShort()">Embed Video</button>
-        
-        <div class="video-container">
-            <iframe id="ytPlayer" width="315" height="560" src="" title="YouTube Short" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="display: none;"></iframe>
-        </div>
+<div class="container">
+    <h2>YouTube URL Embedder</h2>
+    <p>Paste a standard YouTube or YouTube Shorts link below:</p>
+    <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=... or /shorts/...">
+    <br>
+    <button onclick="embedVideo()">Embed Video</button>
+    
+    <div class="player-wrapper" id="playerContainer">
+        <!-- The iframe will appear here -->
     </div>
+</div>
 
-    <script>
-        function extractVideoId(url) {
-            // Handles standard /shorts/ID and regular watch?v=ID formats
-            let match = url.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
-            if (match) return match[1];
-            
-            match = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-            if (match) return match[1];
-            
-            return null;
+<script>
+function extractVideoId(url) {
+    let videoId = null;
+    if (url.includes('/shorts/')) {
+        const parts = url.split('/shorts/');
+        videoId = parts[1] ? parts[1].split('?')[0] : null;
+        return { id: videoId, isShort: true };
+    } else if (url.includes('v=')) {
+        const urlParams = new URLSearchParams(new URL(url).search);
+        videoId = urlParams.get('v');
+        return { id: videoId, isShort: false };
+    } else if (url.includes('youtu.be/')) {
+        const parts = url.split('youtu.be/');
+        videoId = parts[1] ? parts[1].split('?')[0] : null;
+        return { id: videoId, isShort: false };
+    }
+    return { id: null, isShort: false };
+}
+
+function embedVideo() {
+    const rawUrl = document.getElementById('urlInput').value.trim();
+    const container = document.getElementById('playerContainer');
+    container.innerHTML = '';
+
+    try {
+        const { id, isShort } = extractVideoId(rawUrl);
+
+        if (!id) {
+            container.innerHTML = '<p style="color:red;">Invalid YouTube URL. Please try again.</p>';
+            return;
         }
 
-        function embedShort() {
-            const url = document.getElementById('urlInput').value.trim();
-            const videoId = extractVideoId(url);
-            const iframe = document.getElementById('ytPlayer');
+        const width = isShort ? 315 : 560;
+        const height = isShort ? 560 : 315;
 
-            if (videoId) {
-                iframe.src = `https://youtube.com{videoId}`;
-                iframe.style.display = 'block';
-            } else {
-                alert('Please enter a valid YouTube Short or Video URL.');
-            }
-        }
-    </script>
+        const iframe = document.createElement('iframe');
+        iframe.width = width;
+        iframe.height = height;
+        iframe.src = `https://youtube.com{id}`;
+        iframe.title = 'YouTube video player';
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        iframe.allowFullscreen = true;
+
+        container.appendChild(iframe);
+    } catch (e) {
+        container.innerHTML = '<p style="color:red;">Please enter a valid complete URL.</p>';
+    }
+}
+</script>
 
 </body>
 </html>
